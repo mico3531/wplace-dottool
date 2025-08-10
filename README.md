@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # wplace ドット絵変換ツール
 
 ブラウザ上で画像を読み込み、指定したサイズ・範囲を **wplace対応パレット（31色）** に変換して  
@@ -50,3 +51,7 @@ wplace-dottool/
 
 ## ライセンス
 MIT License
+=======
+# wplace-dottool
+wplaceで絵を描く際に自動で変換するようなwebサイト
+>>>>>>> c69dc45f63b15818dc913d89ae5ccd0ce6845393
