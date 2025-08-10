@@ -1,110 +1,120 @@
-const srcCanvas = document.getElementById("srcCanvas");
-const srcCtx = srcCanvas.getContext("2d");
-const previewCanvas = document.getElementById("previewCanvas");
-const previewCtx = previewCanvas.getContext("2d");
+/**
+ * app.js
+ * 画像アップロード、サイズ指定、選択枠制御、ドット絵変換を統合
+ */
 
-let img = new Image();
-let selection = null;
-let isDragging = false;
-let startX, startY;
+import { palette, hexToRgb, nearestColor } from './palette.js';
+import FixedAspectSelector from './selector.js';
 
-// 画像読み込み
-document.getElementById("fileInput").addEventListener("change", e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
+window.addEventListener('DOMContentLoaded', () => {
+  const inputImage = document.getElementById('inputImage');
+  const dotWidthInput = document.getElementById('dotWidth');
+  const dotHeightInput = document.getElementById('dotHeight');
+  const applyAspectBtn = document.getElementById('applyAspect');
+  const imageContainer = document.getElementById('imageContainer');
+  const sourceCanvas = document.getElementById('sourceCanvas');
+  const resultCanvas = document.getElementById('resultCanvas');
+  const convertBtn = document.getElementById('convertBtn');
+
+  const sourceCtx = sourceCanvas.getContext('2d');
+  const resultCtx = resultCanvas.getContext('2d');
+
+  let img = null;
+  let selector = null;
+
+  // 画像アップロード時
+  inputImage.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    img = new Image();
     img.onload = () => {
-      srcCanvas.width = img.width;
-      srcCanvas.height = img.height;
-      srcCtx.drawImage(img, 0, 0);
+      // canvasサイズ合わせる
+      sourceCanvas.width = img.width;
+      sourceCanvas.height = img.height;
+      sourceCtx.clearRect(0, 0, sourceCanvas.width, sourceCanvas.height);
+      sourceCtx.drawImage(img, 0, 0);
+
+      // 既存selector破棄
+      if (selector) {
+        selector.selectionBox.remove();
+      }
+
+      // 初期アスペクト比は入力値で決定
+      const aspectRatio = dotWidthInput.value / dotHeightInput.value;
+      selector = new FixedAspectSelector(imageContainer, aspectRatio);
+
+      // 選択枠をcanvasサイズに合わせて初期配置
+      const initWidth = Math.min(200, img.width);
+      selector.box = {
+        x: (img.width - initWidth) / 2,
+        y: (img.height - initWidth / aspectRatio) / 2,
+        width: initWidth,
+        height: initWidth / aspectRatio
+      };
+      selector.update();
     };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
-});
+    img.src = url;
+  });
 
-// 範囲選択
-srcCanvas.addEventListener("mousedown", e => {
-  const rect = srcCanvas.getBoundingClientRect();
-  startX = e.clientX - rect.left;
-  startY = e.clientY - rect.top;
-  isDragging = true;
-});
-srcCanvas.addEventListener("mousemove", e => {
-  if (!isDragging) return;
-  const rect = srcCanvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  const w = x - startX;
-  const h = y - startY;
-  srcCtx.drawImage(img, 0, 0);
-  srcCtx.strokeStyle = "red";
-  srcCtx.lineWidth = 2;
-  srcCtx.strokeRect(startX, startY, w, h);
-});
-srcCanvas.addEventListener("mouseup", e => {
-  isDragging = false;
-  const rect = srcCanvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  selection = {
-    x: Math.min(startX, x),
-    y: Math.min(startY, y),
-    w: Math.abs(x - startX),
-    h: Math.abs(y - startY)
-  };
-});
+  // アスペクト比反映ボタン
+  applyAspectBtn.addEventListener('click', () => {
+    if (!selector) return;
+    const aspectRatio = dotWidthInput.value / dotHeightInput.value;
+    selector.setAspectRatio(aspectRatio);
+  });
 
-// 変換処理
-document.getElementById("convertBtn").addEventListener("click", () => {
-  if (!selection) {
-    alert("範囲を選択してください");
-    return;
-  }
-  const dotW = parseInt(document.getElementById("dotWidth").value);
-  const dotH = parseInt(document.getElementById("dotHeight").value);
+  // ドット絵変換ボタン
+  convertBtn.addEventListener('click', () => {
+    if (!img || !selector) return;
 
-  const imageData = srcCtx.getImageData(selection.x, selection.y, selection.w, selection.h);
-  const tempCanvas = document.createElement("canvas");
-  tempCanvas.width = dotW;
-  tempCanvas.height = dotH;
-  const tempCtx = tempCanvas.getContext("2d");
+    const rect = selector.getRect();
 
-  const tempImgCanvas = document.createElement("canvas");
-  tempImgCanvas.width = selection.w;
-  tempImgCanvas.height = selection.h;
-  tempImgCanvas.getContext("2d").putImageData(imageData, 0, 0);
-  tempCtx.drawImage(tempImgCanvas, 0, 0, dotW, dotH);
+    // 選択範囲を切り抜くため一旦別canvasへ
+    const tmpCanvas = document.createElement('canvas');
+    const tmpCtx = tmpCanvas.getContext('2d');
+    tmpCanvas.width = rect.width;
+    tmpCanvas.height = rect.height;
+    tmpCtx.drawImage(sourceCanvas, rect.x, rect.y, rect.width, rect.height, 0, 0, rect.width, rect.height);
 
-  const data = tempCtx.getImageData(0, 0, dotW, dotH);
-  for (let i = 0; i < data.data.length; i += 4) {
-    const rgb = {r: data.data[i], g: data.data[i+1], b: data.data[i+2]};
-    const nc = nearestColor(rgb);
-    data.data[i] = nc.r;
-    data.data[i+1] = nc.g;
-    data.data[i+2] = nc.b;
-  }
-  tempCtx.putImageData(data, 0, 0);
+    // ドット絵サイズを取得
+    const outW = parseInt(dotWidthInput.value, 10);
+    const outH = parseInt(dotHeightInput.value, 10);
+    if (isNaN(outW) || isNaN(outH) || outW <= 0 || outH <= 0) {
+      alert('ドット絵サイズは正の整数で指定してください');
+      return;
+    }
 
-  const scale = 10;
-  previewCanvas.width = dotW * scale;
-  previewCanvas.height = dotH * scale;
-  previewCtx.imageSmoothingEnabled = false;
-  previewCtx.drawImage(tempCanvas, 0, 0, dotW * scale, dotH * scale);
+    // 縮小してドット絵化
+    const outCanvas = document.createElement('canvas');
+    outCanvas.width = outW;
+    outCanvas.height = outH;
+    const outCtx = outCanvas.getContext('2d');
 
-  previewCanvas.dataset.downloadUrl = tempCanvas.toDataURL("image/png");
-});
+    // 画像を縮小（バイリニア補間）
+    outCtx.imageSmoothingEnabled = false;
+    outCtx.drawImage(tmpCanvas, 0, 0, rect.width, rect.height, 0, 0, outW, outH);
 
-// ダウンロード
-document.getElementById("downloadBtn").addEventListener("click", () => {
-  const url = previewCanvas.dataset.downloadUrl;
-  if (!url) {
-    alert("変換結果がありません");
-    return;
-  }
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "dot_image.png";
-  a.click();
+    // パレットに最も近い色に変換
+    const imageData = outCtx.getImageData(0, 0, outW, outH);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const rgb = [data[i], data[i+1], data[i+2]];
+      const nearestHex = nearestColor(rgb);
+      const [r, g, b] = hexToRgb(nearestHex);
+      data[i] = r;
+      data[i+1] = g;
+      data[i+2] = b;
+      // alphaはそのまま
+    }
+    outCtx.putImageData(imageData, 0, 0);
+
+    // 結果キャンバスに転送
+    resultCanvas.width = outW;
+    resultCanvas.height = outH;
+    resultCtx.imageSmoothingEnabled = false;
+    resultCtx.clearRect(0, 0, outW, outH);
+    resultCtx.drawImage(outCanvas, 0, 0);
+  });
 });
