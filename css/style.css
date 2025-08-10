@@ -17,6 +17,7 @@ body {
   height: auto;
   display: block;
   margin-top: 1rem;
+  /* 幅はJSで制御するので固定CSSはなし */
 }
 
 #imageContainer {

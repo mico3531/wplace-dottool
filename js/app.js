@@ -69,14 +69,24 @@ window.addEventListener('DOMContentLoaded', () => {
   convertBtn.addEventListener('click', () => {
     if (!img || !selector) return;
 
-    const rect = selector.getRect();
+    const rect = selector.getBox();
+
+    // 選択範囲の座標をcanvas内部ピクセル単位に変換
+    const canvasRect = sourceCanvas.getBoundingClientRect();
+    const scaleX = sourceCanvas.width / canvasRect.width;
+    const scaleY = sourceCanvas.height / canvasRect.height;
+
+    const sx = Math.round(rect.x * scaleX);
+    const sy = Math.round(rect.y * scaleY);
+    const sw = Math.round(rect.width * scaleX);
+    const sh = Math.round(rect.height * scaleY);
 
     // 選択範囲切り抜き用キャンバス
     const tmpCanvas = document.createElement('canvas');
     const tmpCtx = tmpCanvas.getContext('2d');
-    tmpCanvas.width = rect.width;
-    tmpCanvas.height = rect.height;
-    tmpCtx.drawImage(sourceCanvas, rect.x, rect.y, rect.width, rect.height, 0, 0, rect.width, rect.height);
+    tmpCanvas.width = sw;
+    tmpCanvas.height = sh;
+    tmpCtx.drawImage(sourceCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
 
     const outW = parseInt(dotWidthInput.value, 10);
     const outH = parseInt(dotHeightInput.value, 10);
@@ -94,7 +104,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // 補間なしで縮小
     outCtx.imageSmoothingEnabled = false;
-    outCtx.drawImage(tmpCanvas, 0, 0, rect.width, rect.height, 0, 0, outW, outH);
+    outCtx.drawImage(tmpCanvas, 0, 0, sw, sh, 0, 0, outW, outH);
 
     // 色をパレットに近い色に変換
     const imageData = outCtx.getImageData(0, 0, outW, outH);
@@ -110,12 +120,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     outCtx.putImageData(imageData, 0, 0);
 
-    // 結果キャンバスに表示
+    // 結果キャンバスに表示（内部解像度設定）
     resultCanvas.width = outW;
     resultCanvas.height = outH;
     resultCtx.imageSmoothingEnabled = false;
     resultCtx.clearRect(0, 0, outW, outH);
     resultCtx.drawImage(outCanvas, 0, 0);
 
+    // CSSで画面幅の60%に固定して表示
+    const maxDisplayWidth = window.innerWidth * 0.6;
+    resultCanvas.style.width = maxDisplayWidth + 'px';
+    resultCanvas.style.height = 'auto';
   });
 });
