@@ -24,8 +24,8 @@ https://mico3531.github.io/wplace-dottool/
 5. プレビューを確認して「ダウンロード」ボタンで保存
 
 ## ディレクトリ構成
-wplace-dottool/
-├── index.html # HTML本体
+wplace-dottool/ \\
+├── index.html # HTML本体 \\
 ├── css/
 │ └── style.css # スタイル定義
 ├── js/
@@ -50,7 +50,3 @@ wplace-dottool/
 
 ## ライセンス
 MIT License
-=======
-# wplace-dottool
-wplaceで絵を描く際に自動で変換するようなwebサイト
->>>>>>> c69dc45f63b15818dc913d89ae5ccd0ce6845393
