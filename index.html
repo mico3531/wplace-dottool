@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>wplace ドット絵変換ツール</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<h1>wplace ドット絵変換ツール (プロトタイプ)</h1>
+
+<div id="controls">
+  <input type="file" id="fileInput" accept="image/png, image/jpeg"><br><br>
+  横: <input type="number" id="dotWidth" value="50" min="1">  
+  縦: <input type="number" id="dotHeight" value="30" min="1"><br><br>
+  <button id="convertBtn">変換実行</button>
+  <button id="downloadBtn">ダウンロード</button>
+</div>
+
+<div>
+  <h3>元画像 (範囲選択可)</h3>
+  <canvas id="srcCanvas"></canvas>
+</div>
+
+<div>
+  <h3>変換結果 (拡大表示)</h3>
+  <canvas id="previewCanvas"></canvas>
+</div>
+
+<script src="js/palette.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
