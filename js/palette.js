@@ -1,8 +1,9 @@
 /**
- * wplace用31色パレット定義と色近似関数
+ * palette.js
+ * WPLACEの31色パレットと補助関数
  */
 
-const palette = [
+export const palette = [
   '#000000', '#3c3c3c', '#787878', '#d2d2d2',
   '#ffffff', '#6a0015', '#ff0006', '#ff7500',
   '#ffa600', '#ffdc00', '#fffab4', '#00bc5f',
@@ -13,44 +14,29 @@ const palette = [
   '#6e4431', '#9d6617', '#ffae6c'
 ];
 
-/**
- * HEXカラーをRGB配列に変換 (#RRGGBB -> [r,g,b])
- * @param {string} hex 
- * @returns {[number,number,number]}
- */
-function hexToRgb(hex) {
-  const bigint = parseInt(hex.slice(1), 16);
-  return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+// HEXカラー文字列をRGB配列に変換 (#RRGGBB)
+export function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return [r,g,b];
 }
 
-/**
- * RGBの2点間距離（ユークリッド距離）
- * @param {[number,number,number]} c1 
- * @param {[number,number,number]} c2 
- * @returns {number}
- */
-function colorDistance(c1, c2) {
-  return Math.sqrt(
-    (c1[0]-c2[0])**2 +
-    (c1[1]-c2[1])**2 +
-    (c1[2]-c2[2])**2
-  );
+// RGB距離の2乗を計算
+function colorDistSq(c1, c2) {
+  return (c1[0]-c2[0])**2 + (c1[1]-c2[1])**2 + (c1[2]-c2[2])**2;
 }
 
-/**
- * 任意のRGBをパレットの中で最も近い色に変換する
- * @param {[number,number,number]} rgb 
- * @returns {string} HEXカラーコード
- */
-function nearestColor(rgb) {
+// 入力RGBに最も近いパレット色のHEXを返す
+export function nearestColor(rgb) {
   let minDist = Infinity;
   let nearest = palette[0];
-  for (const p of palette) {
-    const prgb = hexToRgb(p);
-    const dist = colorDistance(rgb, prgb);
+  for (const c of palette) {
+    const pc = hexToRgb(c);
+    const dist = colorDistSq(rgb, pc);
     if (dist < minDist) {
       minDist = dist;
-      nearest = p;
+      nearest = c;
     }
   }
   return nearest;
