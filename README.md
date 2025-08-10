@@ -24,13 +24,13 @@ https://mico3531.github.io/wplace-dottool/
 5. プレビューを確認して「ダウンロード」ボタンで保存
 
 ## ディレクトリ構成
-wplace-dottool/ \\
-├── index.html # HTML本体 \\
-├── css/
-│ └── style.css # スタイル定義
-├── js/
-│ ├── palette.js # wplaceパレット定義＆色変換関数
-│ └── app.js # メインアプリ
+wplace-dottool/ <br>
+├── index.html # HTML本体 <br>
+├── css/ <br>
+│ └── style.css # スタイル定義 <br>
+├── js/ <br>
+│ ├── palette.js # wplaceパレット定義＆色変換関数 <br>
+│ └── app.js # メインアプリ <br>
 └── README.md
 
 ## 開発環境 / 技術
