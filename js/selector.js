@@ -5,13 +5,17 @@ export default class FixedAspectSelector {
 
     this.box = { x: 50, y: 50, width: 100, height: 100 / aspectRatio };
 
+    // 色設定（UIから変更可能）
+    this.borderColor = '#00f'; // 枠線色
+    this.fillColor = 'rgba(0,0,255,0.1)'; // 塗りつぶし色
+
     // 選択範囲を表す要素を作成
     this.selectionBox = document.createElement('div');
     this.selectionBox.style.position = 'absolute';
-    this.selectionBox.style.border = '2px solid #00f';
+    this.selectionBox.style.border = `2px solid ${this.borderColor}`;
     this.selectionBox.style.boxSizing = 'border-box';
     this.selectionBox.style.cursor = 'move';
-    this.selectionBox.style.background = 'rgba(0,0,255,0.1)';
+    this.selectionBox.style.background = this.fillColor;
     this.container.appendChild(this.selectionBox);
 
     // 角のハンドル作成
@@ -22,7 +26,7 @@ export default class FixedAspectSelector {
       handle.style.position = 'absolute';
       handle.style.width = '12px';
       handle.style.height = '12px';
-      handle.style.background = '#00f';
+      handle.style.background = this.borderColor;
       handle.style.borderRadius = '50%';
       handle.style.cursor = name + '-resize';
       this.selectionBox.appendChild(handle);
@@ -41,7 +45,7 @@ export default class FixedAspectSelector {
     window.addEventListener('mousemove', this.onMouseMove.bind(this));
     window.addEventListener('mouseup', this.onMouseUp.bind(this));
 
-    // 追加: マウス移動時に辺のカーソル変更
+    // 辺カーソル検出イベント
     this.selectionBox.addEventListener('mousemove', this.onMouseMoveEdgeDetect.bind(this));
 
     this.update();
@@ -49,7 +53,13 @@ export default class FixedAspectSelector {
 
   static EDGE_MARGIN = 6;
 
-  // 辺の検出（マウス座標はviewport基準）
+  // 色設定を変更
+  setColors(borderColor, fillColor) {
+    this.borderColor = borderColor;
+    this.fillColor = fillColor;
+    this.update();
+  }
+
   detectEdge(pos) {
     const rect = this.selectionBox.getBoundingClientRect();
     const leftDist = Math.abs(pos.x - rect.left);
@@ -57,7 +67,6 @@ export default class FixedAspectSelector {
     const topDist = Math.abs(pos.y - rect.top);
     const bottomDist = Math.abs(pos.y - rect.bottom);
 
-    // 上辺
     if (
       topDist <= FixedAspectSelector.EDGE_MARGIN &&
       pos.x >= rect.left + FixedAspectSelector.EDGE_MARGIN &&
@@ -65,7 +74,6 @@ export default class FixedAspectSelector {
     ) {
       return 'top';
     }
-    // 下辺
     if (
       bottomDist <= FixedAspectSelector.EDGE_MARGIN &&
       pos.x >= rect.left + FixedAspectSelector.EDGE_MARGIN &&
@@ -73,7 +81,6 @@ export default class FixedAspectSelector {
     ) {
       return 'bottom';
     }
-    // 左辺
     if (
       leftDist <= FixedAspectSelector.EDGE_MARGIN &&
       pos.y >= rect.top + FixedAspectSelector.EDGE_MARGIN &&
@@ -81,7 +88,6 @@ export default class FixedAspectSelector {
     ) {
       return 'left';
     }
-    // 右辺
     if (
       rightDist <= FixedAspectSelector.EDGE_MARGIN &&
       pos.y >= rect.top + FixedAspectSelector.EDGE_MARGIN &&
@@ -92,7 +98,6 @@ export default class FixedAspectSelector {
     return null;
   }
 
-  // マウス移動時にカーソルを辺に合わせて変える
   onMouseMoveEdgeDetect(e) {
     const edge = this.detectEdge({ x: e.clientX, y: e.clientY });
     if (edge) {
@@ -112,7 +117,6 @@ export default class FixedAspectSelector {
   }
 
   onMouseDown(e) {
-    // 角ハンドル判定は既存処理
     for (const [name, handle] of Object.entries(this.handles)) {
       if (e.target === handle) {
         this.draggingHandle = name;
@@ -123,7 +127,6 @@ export default class FixedAspectSelector {
       }
     }
 
-    // 辺ドラッグ判定
     const edge = this.detectEdge({ x: e.clientX, y: e.clientY });
     if (edge) {
       this.draggingEdge = edge;
@@ -134,7 +137,6 @@ export default class FixedAspectSelector {
       return;
     }
 
-    // 本体ドラッグ判定
     if (e.target === this.selectionBox) {
       this.dragging = true;
       this.dragStart = { x: e.clientX, y: e.clientY };
@@ -158,7 +160,6 @@ export default class FixedAspectSelector {
       let nx = this.boxStart.x;
       let ny = this.boxStart.y;
 
-      // 辺の方向に平行移動
       switch (this.draggingEdge) {
         case 'top':
         case 'bottom':
@@ -200,7 +201,6 @@ export default class FixedAspectSelector {
     this.draggingEdge = null;
   }
 
-  // 縦横比固定のままリサイズ処理
   resizeBox(dx, dy) {
     let newWidth = this.boxStart.width;
     let newHeight = this.boxStart.height;
@@ -235,13 +235,8 @@ export default class FixedAspectSelector {
       newHeight = newWidth / this.aspectRatio;
     }
 
-    // 画面端での制限
-    if (newX < 0) {
-      newX = 0;
-    }
-    if (newY < 0) {
-      newY = 0;
-    }
+    if (newX < 0) newX = 0;
+    if (newY < 0) newY = 0;
     if (newX + newWidth > this.container.clientWidth) {
       newWidth = this.container.clientWidth - newX;
       newHeight = newWidth / this.aspectRatio;
@@ -260,8 +255,13 @@ export default class FixedAspectSelector {
     this.selectionBox.style.top = this.box.y + 'px';
     this.selectionBox.style.width = this.box.width + 'px';
     this.selectionBox.style.height = this.box.height + 'px';
+    this.selectionBox.style.border = `2px solid ${this.borderColor}`;
+    this.selectionBox.style.background = this.fillColor;
 
-    // 角ハンドルの配置
+    for (const handle of Object.values(this.handles)) {
+      handle.style.background = this.borderColor;
+    }
+
     this.handles.nw.style.left = '-6px';
     this.handles.nw.style.top = '-6px';
 
@@ -275,33 +275,23 @@ export default class FixedAspectSelector {
     this.handles.se.style.bottom = '-6px';
   }
 
-  // 現在の選択範囲を取得
   getBox() {
     return { ...this.box };
   }
 
   setAspectRatio(aspectRatio) {
     this.aspectRatio = aspectRatio;
-
-    // 現在の選択ボックスの中心を取得
     const centerX = this.box.x + this.box.width / 2;
     const centerY = this.box.y + this.box.height / 2;
 
-    // 新しいアスペクト比で高さを調整
     this.box.height = this.box.width / aspectRatio;
-
-    // 中心を維持しつつY座標を再設定
     this.box.y = centerY - this.box.height / 2;
 
-    // 画面外に出ないように補正
-    if (this.box.y < 0) {
-      this.box.y = 0;
-    }
+    if (this.box.y < 0) this.box.y = 0;
     if (this.box.y + this.box.height > this.container.clientHeight) {
       this.box.y = this.container.clientHeight - this.box.height;
     }
 
     this.update();
   }
-
 }
