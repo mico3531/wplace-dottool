@@ -1,50 +1,128 @@
 body {
   font-family: sans-serif;
-  padding: 1rem;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: #333;
 }
 
-#sourceCanvas {
-  max-width: 100%;
-  height: auto;
-  display: block;
-  background: #eee;
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5em 1em;
+  background: #f4f4f4;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #ccc;
 }
 
-#resultCanvas {
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  max-width: 100%;
-  height: auto;
+#langWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+main {
+  padding: 1em;
+}
+
+/* 入力セクション */
+.input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+fieldset {
+  border: 1px solid #ccc;
+  padding: 1em;
+  border-radius: 6px;
+}
+
+legend {
+  font-weight: bold;
+  padding: 0 0.5em;
+}
+
+label {
   display: block;
-  margin-top: 1rem;
-  /* 幅はJSで制御するので固定CSSはなし */
+  margin-top: 0.5em;
+}
+
+input[type="number"], select {
+  margin-left: 0.5em;
+}
+
+button {
+  margin-top: 0.5em;
+  padding: 0.4em 0.8em;
+  border: none;
+  background-color: #4CAF50;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+small {
+  display: block;
+  font-size: 0.8em;
+  color: #666;
+  margin-top: 0.2em;
+}
+
+/* キャンバスセクション */
+.canvas-section {
+  margin-top: 1em;
 }
 
 #imageContainer {
-  margin-top: 1rem;
   position: relative;
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid #ccc;
 }
 
+canvas {
+  border: 1px solid #ccc;
+  max-width: 100%;
+  height: auto;
+}
+
+/* 選択枠 */
 .selection-box {
   position: absolute;
-  border: 2px dashed #f00;
-  cursor: move;
+  border: 2px solid red;
+  background: rgba(255, 0, 0, 0.12);
   box-sizing: border-box;
-  user-select: none;
-  touch-action: none;
+  pointer-events: auto;
 }
 
-.selection-handle {
+.selection-box div {
+  width: 12px;
+  height: 12px;
   position: absolute;
-  width: 10px;
-  height: 10px;
-  background: #f00;
-  border: 1px solid #800000;
+  right: 0;
+  bottom: 0;
+  cursor: se-resize;
+  background: red;
   box-sizing: border-box;
-  user-select: none;
 }
 
-.selection-handle.nw { top: -6px; left: -6px; cursor: nwse-resize; }
-.selection-handle.ne { top: -6px; right: -6px; cursor: nesw-resize; }
-.selection-handle.sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
-.selection-handle.se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+/* モバイル対応 */
+@media (max-width: 768px) {
+  header, main {
+    padding: 0.5em;
+  }
+  .input-section {
+    font-size: 0.9em;
+  }
+
+  .selection-box div {
+    width: 10px;
+    height: 10px;
+  }
+}

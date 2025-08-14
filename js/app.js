@@ -1,7 +1,7 @@
 /**
  * app.js
  * メイン処理（グリッド線込み高解像度出力＋UI設定対応版）
- */
+*/
 
 import { palette, hexToRgb, nearestColor } from './palette.js';
 import FixedAspectSelector from './selector.js';
